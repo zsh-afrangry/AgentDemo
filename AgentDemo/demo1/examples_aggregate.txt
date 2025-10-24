@@ -1,0 +1,56 @@
+### 以下是几个【聚合/网络异常】问题的参考范例：
+
+[
+  {
+    "id": 1,
+    "title": "虚拟地址集群企业低参保高补贴",
+    "logic_description": "① 在 MTDB.mtdb_enterprise_reg 中按 `reg_address` 聚合，筛选出地址含 '虚拟孵化器' 且企业数 ≥ 15 的集群 →② 在 SBDB.sbdb_enterprise_insure 中检查该集群企业的 `insured_count` 总和是否极低（例如 ≤ 15人） →③ 同时在 CABDB.cabdb_enterprise_startup 中检查该集群企业 `subsidy_amount` 总和是否较高（例如 ≥ 50万元）。",
+    "conflict_type": "aggregate",
+    "related_entities": {
+      "primary_table": "MTDB.mtdb_enterprise_reg",
+      "secondary_tables": ["SBDB.sbdb_enterprise_insure", "CABDB.cabdb_enterprise_startup"]
+    },
+    "key_fields": ["MTDB.mtdb_enterprise_reg.reg_address", "MTDB.mtdb_enterprise_reg.company_credit_code", "SBDB.sbdb_enterprise_insure.insured_count", "CABDB.cabdb_enterprise_startup.subsidy_amount"],
+    "explanation_hint": "此项核查通过聚合分析，发现注册在同一虚拟地址的企业集群，呈现出‘极低社保人数’和‘高额创业补贴’的聚合异常特征，高度疑似空壳企业套取补贴。",
+    "next_action_hint": "建议对筛选出的虚拟地址集群进行实地抽查，核实企业真实经营情况、用工人数和补贴资格。"
+  },
+  {
+    "id": 2,
+    "title": "区域工业增加值超过企业汇总值",
+    "logic_description": "对每个 `STDDB.stddb_region_gdp` 中的 `region_code` 和 `reporting_month`，汇总其辖区内所有企业 `STDDB.stddb_industrial_output` 的 `industrial_added_value`，若总和小于 `stddb_region_gdp.industrial_added_value`。",
+    "conflict_type": "aggregate",
+    "related_entities": {
+      "primary_table": "STDDB.stddb_region_gdp",
+      "secondary_tables": ["STDDB.stddb_industrial_output"]
+    },
+    "key_fields": ["STDDB.stddb_region_gdp.region_code", "STDDB.stddb_region_gdp.reporting_month", "STDDB.stddb_region_gdp.industrial_added_value", "STDDB.stddb_industrial_output.company_credit_code", "STDDB.stddb_industrial_output.industrial_added_value"],
+    "explanation_hint": "宏观的区域GDP数据（工业）应由微观的企业产值数据汇总支撑。此项核查用于发现宏观数据（区域）与微观数据（企业总和）不匹配的聚合异常，可能存在数据上报失真。",
+    "next_action_hint": "建议对数据差异过大的区域进行重审，核实其GDP数据的构成和来源是否准确。"
+  },
+  {
+    "id": 3,
+    "title": "高注册资本低参保人数疑似空壳",
+    "logic_description": "检查 `MTDB.mtdb_enterprise_reg` 中 `registered_capital` > 100万元但 `SBDB.sbdb_enterprise_insure` 中 `insured_count` ≤ 2 的企业。",
+    "conflict_type": "aggregate",
+    "related_entities": {
+      "primary_table": "MTDB.mtdb_enterprise_reg",
+      "secondary_tables": ["SBDB.sbdb_enterprise_insure"]
+    },
+    "key_fields": ["MTDB.mtdb_enterprise_reg.company_credit_code", "MTDB.mtdb_enterprise_reg.registered_capital", "SBDB.sbdb_enterprise_insure.company_credit_code", "SBDB.sbdb_enterprise_insure.insured_count"],
+    "explanation_hint": "注册资本高（代表公司规模或承诺）但参保人数极低（代表实际用工少）的企业，在聚合特征上存在异常，有空壳公司的风险。",
+    "next_action_hint": "建议将此类企业列为低风险关注池，特别是当它们同时涉及高额发票或高额补贴时，应提升核查优先级。"
+  },
+  {
+    "id": 4,
+    "title": "同一银行账号领取多类财政待遇",
+    "logic_description": "在 `SBDB.sbdb_benefit_apply` 和 `CABDB.cabdb_unemployment_benefit` 中，按 `bank_account` 聚合，查找相同 `bank_account` 关联多个不同 `id_card`，或同一人领取养老金+失业金等互斥待遇。",
+    "conflict_type": "aggregate",
+    "related_entities": {
+      "primary_table": "SBDB.sbdb_benefit_apply",
+      "secondary_tables": ["CABDB.cabdb_unemployment_benefit"]
+    },
+    "key_fields": ["SBDB.sbdb_benefit_apply.bank_account", "SBDB.sbdb_benefit_apply.id_card", "SBDB.sbdb_benefit_apply.benefit_type", "CABDB.cabdb_unemployment_benefit.bank_account", "CABDB.cabdb_unemployment_benefit.id_card"],
+    "explanation_hint": "通过银行账号进行网络聚合分析，可以发现单个身份ID无法发现的风险。例如同一账户代领多人补贴，或一人享受多种冲突待遇。",
+    "next_action_hint": "建议核实这些共享账户的合理性，并检查是否存在身份冒用或待遇重复申领。"
+  }
+]

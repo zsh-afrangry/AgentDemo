@@ -1,0 +1,56 @@
+### 以下是几个【数值/会计不一致】问题的参考范例：
+
+[
+  {
+    "id": 1,
+    "title": "个人个税收入与社保缴费基数严重不匹配",
+    "logic_description": "检查 `TAXDB.taxdb_person_income` 中的 `pre_tax_income` (月均) 是否远大于 `SBDB.sbdb_payment_detail` 中的 `contribution_base`（例如前者为后者的5倍），且 `contribution_base` 为当地最低标准，且同期匹配。",
+    "conflict_type": "quantitative",
+    "related_entities": {
+      "primary_table": "TAXDB.taxdb_person_income",
+      "secondary_tables": ["SBDB.sbdb_payment_detail"]
+    },
+    "key_fields": ["TAXDB.taxdb_person_income.id_card", "TAXDB.taxdb_person_income.reporting_period", "TAXDB.taxdb_person_income.pre_tax_income", "SBDB.sbdb_payment_detail.id_card", "SBDB.sbdb_payment_detail.payment_period", "SBDB.sbdb_payment_detail.contribution_base"],
+    "explanation_hint": "社保缴费基数应与实际工资收入匹配。此项核查用于发现高收入人群（高个税）但按最低标准缴纳社保（低基数）的数值不一致问题，可能存在社保欠缴。",
+    "next_action_hint": "建议对差异倍数过高（如>3倍）且按最低基数缴纳的人员列表进行重点核查，确认其缴费基数是否合规。"
+  },
+  {
+    "id": 2,
+    "title": "企业统计营收显著高于税务申报营收",
+    "logic_description": "对比 `STDDB.stddb_enterprise_revenue` 中的 `total_revenue` 与同期 `TAXDB.taxdb_enterprise_vat` 中的 `revenue`，若统计局上报值高出税务局申报值30%以上则视为异常。",
+    "conflict_type": "quantitative",
+    "related_entities": {
+      "primary_table": "STDDB.stddb_enterprise_revenue",
+      "secondary_tables": ["TAXDB.taxdb_enterprise_vat"]
+    },
+    "key_fields": ["STDDB.stddb_enterprise_revenue.company_credit_code", "STDDB.stddb_enterprise_revenue.reporting_month", "STDDB.stddb_enterprise_revenue.total_revenue", "TAXDB.taxdb_enterprise_vat.company_credit_code", "TAXDB.taxdb_enterprise_vat.reporting_period", "TAXDB.taxdb_enterprise_vat.revenue"],
+    "explanation_hint": "企业向不同部门（统计局、税务局）上报的经营数据应具有一致性。此项核查用于发现两个数据源之间的显著数值差异，可能存在统计虚报或税务瞒报。",
+    "next_action_hint": "建议对差异率过高的企业进行联合审查，核实其真实营业收入。"
+  },
+  {
+    "id": 3,
+    "title": "企业开票金额超过申报营业收入",
+    "logic_description": "对同一企业及同期，检查 `TAXDB.taxdb_invoice_detail` 中所有正常状态 (`invoice_status` = '正常') 发票的 `invoice_amount` 汇总值是否大于 `TAXDB.taxdb_enterprise_vat` 中 `revenue`。",
+    "conflict_type": "quantitative",
+    "related_entities": {
+      "primary_table": "TAXDB.taxdb_invoice_detail",
+      "secondary_tables": ["TAXDB.taxdb_enterprise_vat"]
+    },
+    "key_fields": ["TAXDB.taxdb_invoice_detail.seller_credit_code", "TAXDB.taxdb_invoice_detail.issue_date", "TAXDB.taxdb_invoice_detail.invoice_amount", "TAXDB.taxdb_invoice_detail.invoice_status", "TAXDB.taxdb_enterprise_vat.company_credit_code", "TAXDB.taxdb_enterprise_vat.reporting_period", "TAXDB.taxdb_enterprise_vat.revenue"],
+    "explanation_hint": "企业的营业收入申报值理论上应不小于其开具发票的总金额。此项核查用于发现（开票总额 > 申报收入）的数值不一致情况，高度疑似税务少报收入。",
+    "next_action_hint": "建议对（汇总开票金额 > 申报收入）的企业进行税务稽查。"
+  },
+  {
+    "id": 4,
+    "title": "企业所得税申报从业人数与社保参保人数差异过大",
+    "logic_description": "比较 `TAXDB.taxdb_enterprise_income` 中 `employee_count` (年度) 与同年度 `SBDB.sbdb_enterprise_insure` 中 `insured_count` (月均或年末)，若差异率超过40%则异常。",
+    "conflict_type": "quantitative",
+    "related_entities": {
+      "primary_table": "TAXDB.taxdb_enterprise_income",
+      "secondary_tables": ["SBDB.sbdb_enterprise_insure"]
+    },
+    "key_fields": ["TAXDB.taxdb_enterprise_income.company_credit_code", "TAXDB.taxdb_enterprise_income.report_year", "TAXDB.taxdb_enterprise_income.employee_count", "SBDB.sbdb_enterprise_insure.company_credit_code", "SBDB.sbdb_enterprise_insure.insure_start_date", "SBDB.sbdb_enterprise_insure.insured_count"],
+    "explanation_hint": "企业在税务系统申报的从业人数和在社保系统申报的参保人数应基本一致。此项核查用于发现两个数据源的巨大数值差异，可能存在社保未足额缴纳或税务虚报人数（以享受优惠政策）。",
+    "next_action_hint": "建议对人数差异过大的企业进行联合核查，确认真实用工人数和社保缴纳情况。"
+  }
+]

@@ -1,0 +1,43 @@
+### 以下是几个【流程/资格矛盾】问题的参考范例：
+
+[
+  {
+    "id": 1,
+    "title": "经营异常企业申领创业补贴",
+    "logic_description": "检查 `CABDB.cabdb_enterprise_startup` 中已审批 (`approval_status` = '已审批') 的企业，其 `company_credit_code` 是否在 `MTDB.mtdb_abnormal_list` 中存在 `listing_date` 在 `apply_date` 之前、且 `removal_date` 为空的记录。",
+    "conflict_type": "process",
+    "related_entities": {
+      "primary_table": "CABDB.cabdb_enterprise_startup",
+      "secondary_tables": ["MTDB.mtdb_abnormal_list"]
+    },
+    "key_fields": ["CABDB.cabdb_enterprise_startup.company_credit_code", "CABDB.cabdb_enterprise_startup.approval_status", "CABDB.cabdb_enterprise_startup.apply_date", "MTDB.mtdb_abnormal_list.company_credit_code", "MTDB.mtdb_abnormal_list.listing_date", "MTDB.mtdb_abnormal_list.removal_date"],
+    "explanation_hint": "该核查项用于发现处于‘经营异常’状态的企业（前置资格不符）违规申领并获批创业补贴的情况。",
+    "next_action_hint": "建议拉取所有在异常名录中（MTDB）但已获批补贴（CABDB）的企业列表进行复核。"
+  },
+  {
+    "id": 2,
+    "title": "非首次创业企业领取首次创业补贴",
+    "logic_description": "检查 `CABDB.cabdb_enterprise_startup` 中 `subsidy_type` = '首次创业补贴' 的企业法人 `legal_rep_id_card`，是否在 `MTDB.mtdb_enterprise_reg` 中关联其他 `establish_date` 更早的企业。",
+    "conflict_type": "process",
+    "related_entities": {
+      "primary_table": "CABDB.cabdb_enterprise_startup",
+      "secondary_tables": ["MTDB.mtdb_enterprise_reg"]
+    },
+    "key_fields": ["CABDB.cabdb_enterprise_startup.legal_rep_id_card", "CABDB.cabdb_enterprise_startup.subsidy_type", "CABDB.cabdb_enterprise_startup.apply_date", "MTDB.mtdb_enterprise_reg.legal_rep_id_card", "MTDB.mtdb_enterprise_reg.establish_date"],
+    "explanation_hint": "该核查项用于发现企业法人（已非首次创业）违规申领‘首次创业补贴’的资格矛盾。",
+    "next_action_hint": "建议拉取申领‘首次创业补贴’的法人，并核查其名下所有企业的成立日期。"
+  },
+  {
+    "id": 3,
+    "title": "无对应经营许可却开具相关发票",
+    "logic_description": "检查 `TAXDB.taxdb_invoice_detail` 中 `goods_service_name` 涉及特定许可（如医疗器械、危化品）的发票，其销方 `seller_credit_code` 是否在 `MTDB.mtdb_enterprise_license` 中缺少对应 `license_type` 或许可已过期 (`valid_to` < `issue_date`)。",
+    "conflict_type": "process",
+    "related_entities": {
+      "primary_table": "TAXDB.taxdb_invoice_detail",
+      "secondary_tables": ["MTDB.mtdb_enterprise_license"]
+    },
+    "key_fields": ["TAXDB.taxdb_invoice_detail.seller_credit_code", "TAXDB.taxdb_invoice_detail.goods_service_name", "TAXDB.taxdb_invoice_detail.issue_date", "MTDB.mtdb_enterprise_license.company_credit_code", "MTDB.mtdb_enterprise_license.license_type", "MTDB.mtdb_enterprise_license.valid_to"],
+    "explanation_hint": "开具特定商品或服务的发票需要相应的前置经营许可。此项核查用于发现企业可能存在的超范围经营或无证经营的流程/资格矛盾。",
+    "next_action_hint": "建议对涉及特定许可商品的发票进行抽查，并反向核实销方企业的经营资质。"
+  }
+]

@@ -1,0 +1,56 @@
+### 以下是几个【状态矛盾】问题的参考范例：
+
+[
+  {
+    "id": 1,
+    "title": "注销企业仍正常参保",
+    "logic_description": "检查 `MTDB.mtdb_enterprise_reg` 中 `business_status` = '注销' 的企业，是否仍在 `SBDB.sbdb_enterprise_insure` 中存在 `insured_count` > 0 的记录。",
+    "conflict_type": "binary",
+    "related_entities": {
+      "primary_table": "MTDB.mtdb_enterprise_reg",
+      "secondary_tables": ["SBDB.sbdb_enterprise_insure"]
+    },
+    "key_fields": ["MTDB.mtdb_enterprise_reg.company_credit_code", "MTDB.mtdb_enterprise_reg.business_status", "SBDB.sbdb_enterprise_insure.company_credit_code", "SBDB.sbdb_enterprise_insure.insured_count"],
+    "explanation_hint": "该核查项用于发现企业在工商登记中已‘注销’，但在社保系统中仍作为‘正常参保’主体（有参保人数）的状态矛盾。",
+    "next_action_hint": "建议拉取这些企业列表，核实其社保账户是否应被封存或清理。"
+  },
+  {
+    "id": 2,
+    "title": "在营个体户申领城乡低保",
+    "logic_description": "检查 `CABDB.cabdb_subsistence_benefit` 中申领低保的个人，其 `id_card` 是否在 `MTDB.mtdb_individual_reg` 中作为 `operator_id_card` 存在，且 `business_status` = '在营'。",
+    "conflict_type": "binary",
+    "related_entities": {
+      "primary_table": "CABDB.cabdb_subsistence_benefit",
+      "secondary_tables": ["MTDB.mtdb_individual_reg"]
+    },
+    "key_fields": ["CABDB.cabdb_subsistence_benefit.id_card", "CABDB.cabdb_subsistence_benefit.disbursement_status", "MTDB.mtdb_individual_reg.operator_id_card", "MTDB.mtdb_individual_reg.business_status"],
+    "explanation_hint": "该核查项用于发现以‘在营’个体户经营者身份（有经营收入）同时享受城乡低保待遇（针对低收入群体）的状态矛盾。",
+    "next_action_hint": "建议导出可疑人员名单，核实其低保资格与工商登记状态的真实性。"
+  },
+  {
+    "id": 3,
+    "title": "税务登记已注销但仍在申报增值税",
+    "logic_description": "检查 `TAXDB.taxdb_enterprise_reg` 中 `cancel_date` 非空的企业，是否在 `TAXDB.taxdb_enterprise_vat` 中仍有 `filing_status` = '已申报' 且 `reporting_period` (周期) 大于 `cancel_date` (注销日期) 的记录。",
+    "conflict_type": "binary",
+    "related_entities": {
+      "primary_table": "TAXDB.taxdb_enterprise_reg",
+      "secondary_tables": ["TAXDB.taxdb_enterprise_vat"]
+    },
+    "key_fields": ["TAXDB.taxdb_enterprise_reg.company_credit_code", "TAXDB.taxdb_enterprise_reg.cancel_date", "TAXDB.taxdb_enterprise_vat.company_credit_code", "TAXDB.taxdb_enterprise_vat.filing_status", "TAXDB.taxdb_enterprise_vat.reporting_period"],
+    "explanation_hint": "企业在税务注销后，理论上不应再有新的税务申报行为。此核查项用于发现这种‘已注销’但‘仍申报’的状态矛盾。",
+    "next_action_hint": "建议核实这些企业的注销状态是否真实有效，或是否存在异常申报行为。"
+  },
+  {
+    "id": 4,
+    "title": "未达退休年龄领取养老金",
+    "logic_description": "检查 `SBDB.sbdb_benefit_apply` 中 `benefit_type` = '养老金' 的申请人，关联 `SBDB.sbdb_person_base` 表中的 `birth_date`，推算其在 `apply_date` 时的年龄是否小于法定退休年龄（如男性<60, 女性<55）。",
+    "conflict_type": "binary",
+    "related_entities": {
+      "primary_table": "SBDB.sbdb_benefit_apply",
+      "secondary_tables": ["SBDB.sbdb_person_base"]
+    },
+    "key_fields": ["SBDB.sbdb_benefit_apply.id_card", "SBDB.sbdb_benefit_apply.benefit_type", "SBDB.sbdb_benefit_apply.apply_date", "SBDB.sbdb_person_base.id_card", "SBDB.sbdb_person_base.birth_date", "SBDB.sbdb_person_base.gender"],
+    "explanation_hint": "领取养老金的资格与达到法定退休年龄的状态强相关。此项核查用于发现‘未达龄’但‘已领取’的状态矛盾（特殊工种除外）。",
+    "next_action_hint": "建议复核这些人员的年龄信息及养老金申领资格，排除特殊工种或政策性提前退休的情况。"
+  }
+]

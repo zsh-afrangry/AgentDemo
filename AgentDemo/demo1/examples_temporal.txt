@@ -1,0 +1,43 @@
+### 以下是几个【时间/因果矛盾】问题的参考范例：
+
+[
+  {
+    "id": 1,
+    "title": "新成立企业未在30天内办理社保登记",
+    "logic_description": "检查 `MTDB.mtdb_enterprise_reg` 中 `establish_date` 起30日内，`SBDB.sbdb_enterprise_insure` 是否无对应 `insure_start_date` 记录，或该 `insure_start_date` 晚于 `establish_date` 30天以上。",
+    "conflict_type": "temporal",
+    "related_entities": {
+      "primary_table": "MTDB.mtdb_enterprise_reg",
+      "secondary_tables": ["SBDB.sbdb_enterprise_insure"]
+    },
+    "key_fields": ["MTDB.mtdb_enterprise_reg.company_credit_code", "MTDB.mtdb_enterprise_reg.establish_date", "SBDB.sbdb_enterprise_insure.company_credit_code", "SBDB.sbdb_enterprise_insure.insure_start_date"],
+    "explanation_hint": "法规要求新成立企业在规定时限内（如30天）为员工办理社保登记。此项核查用于发现登记时间严重滞后的情况。",
+    "next_action_hint": "建议向新成立（超过30天）但仍未办理社保登记的企业发出催办通知。"
+  },
+  {
+    "id": 2,
+    "title": "企业许可到期后仍申报对应营收",
+    "logic_description": "检查持有特定许可类型的企业，在其 `MTDB.mtdb_enterprise_license` 的 `valid_to` 过期后，`STDDB.stddb_enterprise_revenue` 是否仍有 `reporting_month` 晚于 `valid_to` 的相关主营业务收入申报。",
+    "conflict_type": "temporal",
+    "related_entities": {
+      "primary_table": "MTDB.mtdb_enterprise_license",
+      "secondary_tables": ["STDDB.stddb_enterprise_revenue"]
+    },
+    "key_fields": ["MTDB.mtdb_enterprise_license.company_credit_code", "MTDB.mtdb_enterprise_license.license_type", "MTDB.mtdb_enterprise_license.valid_to", "STDDB.stddb_enterprise_revenue.company_credit_code", "STDDB.stddb_enterprise_revenue.reporting_month", "STDDB.stddb_enterprise_revenue.main_revenue"],
+    "explanation_hint": "企业在经营许可过期后，不应再从事相关经营活动并产生营收。此项核查用于发现‘许可过期’但‘仍在经营’的时间矛盾。",
+    "next_action_hint": "建议核实这些企业是否在无证经营，或其营收是否来自其他合法业务。"
+  },
+  {
+    "id": 3,
+    "title": "地址变更后未及时同步税务登记",
+    "logic_description": "检查 `MTDB.mtdb_addr_change` 中 `change_date` 后30日内，`TAXDB.taxdb_enterprise_reg` 的 `tax_reg_address` 是否仍未更新为 `new_address`。",
+    "conflict_type": "temporal",
+    "related_entities": {
+      "primary_table": "MTDB.mtdb_addr_change",
+      "secondary_tables": ["TAXDB.taxdb_enterprise_reg"]
+    },
+    "key_fields": ["MTDB.mtdb_addr_change.company_credit_code", "MTDB.mtdb_addr_change.change_date", "MTDB.mtdb_addr_change.new_address", "TAXDB.taxdb_enterprise_reg.company_credit_code", "TAXDB.taxdb_enterprise_reg.tax_reg_address"],
+    "explanation_hint": "企业变更经营地址后，应在规定时限内同步变更税务登记地址。此项核查用于发现两个系统间地址信息同步的时间延迟问题。",
+    "next_action_hint": "建议提醒这些企业及时更新税务登记信息，以防后续监管失联。"
+  }
+]
