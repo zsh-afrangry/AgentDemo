@@ -1,0 +1,69 @@
+AgentDemo/
+│
+├── backend/
+│   ├── main.py                     # FastAPI主程序入口
+│   ├── routers/
+│   │   ├── schema_parser.py        # 数据库结构解析模块
+│   │   ├── problem_generator.py    # 问题库生成模块
+│   │   ├── clustering.py           # 数据聚类模块
+│   │   ├── text2sql.py             # 自然语言到SQL转换模块
+│   │   ├── debugger.py             # SQL自动修正模块
+│   │   ├── visualizer.py           # 可视化接口
+│   │   └── feedback.py             # 用户反馈与模型持续学习
+│   │
+│   ├── core/
+│   │   ├── schema_understanding.py # Schema语义理解核心逻辑
+│   │   ├── prompt_rewriter.py      # 提示词优化核心逻辑
+│   │   ├── sql_generator.py        # SQL生成核心逻辑
+│   │   ├── sql_validator.py        # SQL验证与错误捕获
+│   │   ├── problem_templates.py    # 问题模板逻辑
+│   │   └── report_builder.py       # 报告构建模块
+│   │
+│   ├── data/
+│   │   ├── schema_json/            # 各部门数据库结构文件
+│   │   │   ├── SBDB_schema.json
+│   │   │   ├── MTDB_schema.json
+│   │   │   ├── TAXDB_schema.json
+│   │   │   └── CABDB_schema.json
+│   │   ├── samples/                # 示例SQL与问题样本
+│   │   │   ├── problem_samples.txt
+│   │   │   ├── query_examples.sql
+│   │   │   └── human_rules.txt
+│   │   └── results/
+│   │       ├── analysis_log.txt
+│   │       ├── generated_problems.json
+│   │       ├── sql_outputs.json
+│   │       └── conflict_report.json
+│   │
+│   ├── utils/
+│   │   ├── db_connection.py        # 数据库连接管理
+│   │   ├── logger.py               # 日志模块
+│   │   ├── file_io.py              # JSON/TXT文件读写
+│   │   └── config_loader.py        # 配置文件管理
+│   │
+│   └── config/
+│       ├── settings.json           # 环境与路径配置
+│       └── agents_config.json      # 各智能体策略配置
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── FileUpload.vue
+│   │   │   ├── AgentControl.vue
+│   │   │   ├── LogPanel.vue
+│   │   │   └── ResultView.vue
+│   │   ├── pages/
+│   │   │   ├── Home.vue
+│   │   │   └── Dashboard.vue
+│   │   └── utils/
+│   │       └── api.js
+│   └── vite.config.js
+│
+└── docs/
+    ├── 项目上下文说明书（AI可读版）.pdf
+    ├── 数据库说明.md
+    ├── 模块设计说明.md
+    ├── API接口文档.md
+    └── 测试数据设计.md
+
+
